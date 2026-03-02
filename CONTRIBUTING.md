@@ -1,11 +1,11 @@
 # Contributing to SignalKit
 
-Thank you for your interest in contributing. SignalKit values correctness, real-time safety, and clean code above all else.
+Correctness and real-time safety come first. Read this before opening a PR.
 
 ## Getting Started
 
 ```bash
-git clone https://github.com/AstroLogicStudio/SignalKit.git
+git clone https://github.com/CastorLogic/SignalKit.git
 cd SignalKit
 swift build
 swift test

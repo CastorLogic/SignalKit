@@ -1,7 +1,7 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
+import Darwin
 
 // MARK: - Crossfeed Processor
 

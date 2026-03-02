@@ -1,20 +1,19 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
 import Accelerate
 
 // MARK: - Band Configuration
 
 /// Filter shape for an EQ band.
-public enum EQBandType: Int, Codable, CaseIterable {
+@frozen public enum EQBandType: Int, Codable, CaseIterable, Sendable {
     case lowShelf = 0
     case peaking = 1
     case highShelf = 2
 }
 
 /// A single parametric EQ band.
-public struct EQBand: Codable, Equatable {
+public struct EQBand: Codable, Hashable, Sendable {
     public var gain: Float       // dB, clamped to ±12
     public var frequency: Float  // Hz
     public var q: Float          // quality factor
@@ -31,28 +30,27 @@ public struct EQBand: Codable, Equatable {
     public var isActive: Bool { abs(gain) > 0.05 }
 }
 
-/// Number of bands in the default ISO configuration.
-public let kEQBandCount = 10
-
-/// ISO 31 center frequencies spanning the audible range.
-public let kEQFrequencies: [Float] = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
-
-/// Human-readable labels for each band.
-public let kEQLabels: [String] = ["31", "62", "125", "250", "500", "1K", "2K", "4K", "8K", "16K"]
-
-
-
 // MARK: - Preset
 
 /// Serializable 10-band EQ preset.
-public struct EQPreset: Codable, Equatable {
-    /// Per-band gain in dB. Indices 0–9 correspond to `kEQFrequencies`.
+public struct EQPreset: Codable, Hashable, Sendable {
+
+    /// Number of bands in the default ISO configuration.
+    public static let bandCount = 10
+
+    /// ISO 31 center frequencies spanning the audible range.
+    public static let frequencies: [Float] = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+
+    /// Human-readable labels for each band.
+    public static let labels: [String] = ["31", "62", "125", "250", "500", "1K", "2K", "4K", "8K", "16K"]
+
+    /// Per-band gain in dB. Indices 0–9 correspond to ``frequencies``.
     public var gains: [Float]
 
     public init(gains: [Float]? = nil) {
-        self.gains = gains ?? Array(repeating: 0, count: kEQBandCount)
-        while self.gains.count < kEQBandCount { self.gains.append(0) }
-        if self.gains.count > kEQBandCount { self.gains = Array(self.gains.prefix(kEQBandCount)) }
+        self.gains = gains ?? Array(repeating: 0, count: Self.bandCount)
+        while self.gains.count < Self.bandCount { self.gains.append(0) }
+        if self.gains.count > Self.bandCount { self.gains = Array(self.gains.prefix(Self.bandCount)) }
     }
 
     /// True when all bands are at or near 0 dB.
@@ -95,7 +93,7 @@ public struct EQPreset: Codable, Equatable {
 ///
 /// Real-time safe: `process()` performs zero heap allocations. All scratch buffers
 /// are pre-allocated at init. Coefficients are updated from the control thread via
-/// `setGain(band:gain:)` and read lock-free by the audio thread — the worst case
+/// `setGain(_:forBand:)` and read lock-free by the audio thread — the worst case
 /// is processing one callback with stale coefficients, which is inaudible.
 public final class EQProcessor: AudioProcessor {
 
@@ -129,16 +127,16 @@ public final class EQProcessor: AudioProcessor {
         self.scratchOutput.initialize(repeating: 0, count: scratchCapacity)
 
         // 10-band ISO layout: shelf–peak–peak–...–peak–shelf
-        self.bands = kEQFrequencies.enumerated().map { i, freq in
-            let type: EQBandType = i == 0 ? .lowShelf : (i == kEQBandCount - 1 ? .highShelf : .peaking)
+        self.bands = EQPreset.frequencies.enumerated().map { i, freq in
+            let type: EQBandType = i == 0 ? .lowShelf : (i == EQPreset.bandCount - 1 ? .highShelf : .peaking)
             let q: Float = type == .peaking ? 1.4 : 0.707
             return EQBand(gain: 0, frequency: freq, q: q, type: type)
         }
 
-        self.coefficients = Array(repeating: [1, 0, 0, 0, 0], count: kEQBandCount)
-        self.vdspCoeffs   = Array(repeating: [1, 0, 0, 0, 0], count: kEQBandCount)
+        self.coefficients = Array(repeating: [1, 0, 0, 0, 0], count: EQPreset.bandCount)
+        self.vdspCoeffs   = Array(repeating: [1, 0, 0, 0, 0], count: EQPreset.bandCount)
         self.delays = Array(repeating: Array(repeating: [0, 0, 0, 0], count: maxChannels),
-                            count: kEQBandCount)
+                            count: EQPreset.bandCount)
     }
 
     deinit {
@@ -151,8 +149,13 @@ public final class EQProcessor: AudioProcessor {
     // MARK: - Public API
 
     /// Set gain for a single band and recalculate its coefficients.
+    ///
     /// Call from the control thread.
-    public func setGain(band: Int, gain: Float) {
+    ///
+    /// - Parameters:
+    ///   - gain: Gain in dB, clamped to ±12.
+    ///   - band: Band index (0–9).
+    public func setGain(_ gain: Float, forBand band: Int) {
         guard band >= 0 && band < bands.count else { return }
         bands[band].gain = max(-12, min(12, gain))
         recalculateCoefficient(for: band)
@@ -238,18 +241,10 @@ public final class EQProcessor: AudioProcessor {
         }
     }
 
-    /// Process stereo pair. Convenience wrapper for the common L/R case.
-    public func process(left: UnsafeMutablePointer<Float>,
-                        right: UnsafeMutablePointer<Float>,
-                        count: Int) {
-        process(left, count: count, channel: 0)
-        process(right, count: count, channel: 1)
-    }
-
     // MARK: - Coefficient Calculation
 
-    /// Recalculate all band coefficients. Call after bulk gain changes.
-    public func recalculateAllCoefficients() {
+    /// Recalculate all band coefficients. Called internally after bulk gain changes.
+    func recalculateAllCoefficients() {
         for i in 0..<bands.count { recalculateCoefficient(for: i) }
     }
 

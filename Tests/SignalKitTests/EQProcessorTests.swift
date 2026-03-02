@@ -29,9 +29,9 @@ final class EQProcessorTests: XCTestCase {
     func testIsFlatProperty() {
         let eq = EQProcessor()
         XCTAssertTrue(eq.isFlat)
-        eq.setGain(band: 5, gain: 3.0)
+        eq.setGain(3.0, forBand: 5)
         XCTAssertFalse(eq.isFlat)
-        eq.setGain(band: 5, gain: 0.0)
+        eq.setGain(0.0, forBand: 5)
         XCTAssertTrue(eq.isFlat)
     }
 
@@ -39,7 +39,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testBoostIncreasesSignalPower() {
         let eq = EQProcessor(sampleRate: 48000, maxChannels: 2)
-        eq.setGain(band: 5, gain: 12.0) // +12 dB at 1 kHz
+        eq.setGain(12.0, forBand: 5) // +12 dB at 1 kHz
 
         let count = 512
         let input = UnsafeMutablePointer<Float>.allocate(capacity: count)
@@ -64,7 +64,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testCutDecreasesPower() {
         let eq = EQProcessor(sampleRate: 48000)
-        eq.setGain(band: 5, gain: -12.0) // -12 dB at 1 kHz
+        eq.setGain(-12.0, forBand: 5) // -12 dB at 1 kHz
 
         let count = 1024
         let input = UnsafeMutablePointer<Float>.allocate(capacity: count)
@@ -95,9 +95,9 @@ final class EQProcessorTests: XCTestCase {
 
     func testGainClamping() {
         let eq = EQProcessor()
-        eq.setGain(band: 0, gain: 99.0)
+        eq.setGain(99.0, forBand: 0)
         XCTAssertEqual(eq.bands[0].gain, 12.0, "Gain should be clamped to +12")
-        eq.setGain(band: 0, gain: -99.0)
+        eq.setGain(-99.0, forBand: 0)
         XCTAssertEqual(eq.bands[0].gain, -12.0, "Gain should be clamped to -12")
     }
 
@@ -105,7 +105,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testChannelIndependence() {
         let eq = EQProcessor(sampleRate: 48000, maxChannels: 2)
-        eq.setGain(band: 5, gain: 12.0)
+        eq.setGain(12.0, forBand: 5)
 
         let count = 512
         let left = UnsafeMutablePointer<Float>.allocate(capacity: count)
@@ -130,7 +130,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testZeroLengthBufferNoOp() {
         let eq = EQProcessor()
-        eq.setGain(band: 5, gain: 6.0)
+        eq.setGain(6.0, forBand: 5)
         let ptr = UnsafeMutablePointer<Float>.allocate(capacity: 1)
         defer { ptr.deallocate() }
         ptr[0] = 0.5
@@ -140,7 +140,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testInvalidChannelNoOp() {
         let eq = EQProcessor(sampleRate: 48000, maxChannels: 2)
-        eq.setGain(band: 5, gain: 6.0)
+        eq.setGain(6.0, forBand: 5)
         let count = 64
         let ptr = UnsafeMutablePointer<Float>.allocate(capacity: count)
         defer { ptr.deallocate() }
@@ -151,8 +151,8 @@ final class EQProcessorTests: XCTestCase {
 
     func testInvalidBandIgnored() {
         let eq = EQProcessor()
-        eq.setGain(band: -1, gain: 6.0)
-        eq.setGain(band: 99, gain: 6.0)
+        eq.setGain(6.0, forBand: -1)
+        eq.setGain(6.0, forBand: 99)
         XCTAssertTrue(eq.isFlat, "Invalid band indices should be ignored")
     }
 
@@ -160,7 +160,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testResetClearsState() {
         let eq = EQProcessor()
-        eq.setGain(band: 5, gain: 12.0)
+        eq.setGain(12.0, forBand: 5)
         XCTAssertFalse(eq.isFlat)
         eq.reset()
         XCTAssertTrue(eq.isFlat)
@@ -184,7 +184,7 @@ final class EQProcessorTests: XCTestCase {
 
     func testSampleRateUpdateRecalculates() {
         let eq = EQProcessor(sampleRate: 44100)
-        eq.setGain(band: 5, gain: 6.0)
+        eq.setGain(6.0, forBand: 5)
         eq.updateSampleRate(48000)
         // Should not crash, and isFlat should still be false
         XCTAssertFalse(eq.isFlat)

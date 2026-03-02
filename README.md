@@ -8,7 +8,7 @@ Pure Swift audio DSP toolkit for real-time signal processing on Apple platforms.
 
 ---
 
-SignalKit provides production-grade audio processors designed for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. Every processor guarantees **zero heap allocations** in its process path — no locks, no Objective-C messaging, no hidden `malloc`.
+SignalKit is a collection of audio processors for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. Zero heap allocations in the process path — no locks, no Objective-C messaging, no hidden `malloc`.
 
 ## Processors
 
@@ -30,7 +30,7 @@ Add SignalKit to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/AstroLogicStudio/SignalKit.git", from: "1.0.0")
+    .package(url: "https://github.com/CastorLogic/SignalKit.git", from: "1.0.0")
 ]
 ```
 
@@ -64,7 +64,9 @@ compressor.process(right, count: frameCount, channel: 1)
 
 ```swift
 // Widen stereo image (1.0 = unchanged, 0.0 = mono, 2.0 = double-wide)
-StereoWidener.processPlanar(left: leftBuf, right: rightBuf, count: frames, width: 1.5)
+let widener = StereoWidener()
+widener.width = 1.5
+widener.processPlanar(left: leftBuf, right: rightBuf, count: frames)
 
 // Headphone crossfeed
 let crossfeed = CrossfeedProcessor(sampleRate: 48000)
@@ -150,14 +152,14 @@ Sources/SignalKit/
 ├── Metering/       LoudnessMeter (ITU-R BS.1770-4)
 └── Buffers/        SPSCRingBuffer (lock-free SPSC)
 
-Tests/SignalKitTests/   49 tests across all processors
+Tests/SignalKitTests/   52 tests across all processors
 Benchmarks/             Performance measurement suite
 ```
 
 ## Running Tests & Benchmarks
 
 ```bash
-# Run the test suite (49 tests)
+# Run the test suite (52 tests)
 swift test
 
 # Run benchmarks (release build required for accurate timing)

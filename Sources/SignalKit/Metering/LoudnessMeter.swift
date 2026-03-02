@@ -1,7 +1,6 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
 import Accelerate
 
 // MARK: - Loudness Meter
@@ -206,14 +205,6 @@ public final class LoudnessMeter: AudioProcessor {
         }
     }
 
-    /// Process stereo pair.
-    public func process(left: UnsafeMutablePointer<Float>,
-                        right: UnsafeMutablePointer<Float>,
-                        count: Int) {
-        process(left, count: count, channel: 0)
-        process(right, count: count, channel: 1)
-    }
-
     // MARK: - K-Weighting Biquad
 
     @inline(__always)
@@ -244,7 +235,7 @@ public final class LoudnessMeter: AudioProcessor {
         currentGainLinear = 1.0
         targetGainLinear = 1.0
         measuredLUFS = -120.0
-        kWeightDelayStage1 = [0, 0, 0, 0]
-        kWeightDelayStage2 = [0, 0, 0, 0]
+        for i in 0..<4 { kWeightDelayStage1[i] = 0 }
+        for i in 0..<4 { kWeightDelayStage2[i] = 0 }
     }
 }

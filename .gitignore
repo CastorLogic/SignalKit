@@ -3,7 +3,8 @@
 /Packages
 xcuserdata/
 DerivedData/
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.gemini/
+.agents/
 .netrc
 *.xcodeproj
 Benchmarks/benchmark_*.json

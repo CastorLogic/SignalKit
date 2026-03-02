@@ -15,11 +15,11 @@ public protocol AudioProcessor: AnyObject {
 }
 ```
 
-The protocol enforces in-place processing on raw float pointers. No `AVAudioPCMBuffer`, no format negotiation, no bridging overhead.
+The single-channel `process(_:count:channel:)` is the primary entry point. A default extension provides a stereo `process(left:right:count:)` that calls the single-channel method for channels 0 and 1. Processors only need to implement the single-channel method.
 
 ## Real-Time Safety
 
-Audio render callbacks run on a high-priority real-time thread managed by CoreAudio. Blocking or allocating on this thread causes audible glitches. SignalKit's processors are designed to be safe for direct use inside:
+CoreAudio's render thread is real-time priority. Blocking or allocating on it drops audio. All processors are safe to call directly from:
 
 - `IOProc` callbacks (HAL-level)
 - Audio Unit render callbacks (`AURenderCallback`)
@@ -65,11 +65,9 @@ Each stage processes audio in-place. No intermediate buffer copies between stage
 
 ### Stateful Processors (class-based)
 
-`EQProcessor`, `CompressorProcessor`, `LimiterProcessor`, `CrossfeedProcessor`, `LoudnessMeter` — these maintain internal state (filter delays, envelope followers, delay lines). They are `final class` instances with `reset()` methods.
+`EQProcessor`, `CompressorProcessor`, `LimiterProcessor`, `CrossfeedProcessor`, `LoudnessMeter`, `StereoWidener` — these are `public final class` instances conforming to `AudioProcessor`. Stateful processors maintain internal filter delays, envelope followers, or delay lines, and expose a `reset()` method to clear state.
 
-### Stateless Processors (static methods)
-
-`StereoWidener` — purely algebraic matrix operation with no filter memory. Exposed as `static func` on a struct, using thread-local scratch buffers.
+`StereoWidener` is technically stateless (M/S is a pure matrix operation), but is implemented as a class with instance-owned scratch buffers for thread safety. Multiple wideners can run concurrently without interference.
 
 ### Lock-Free Data Structures
 
@@ -94,6 +92,8 @@ Each stage processes audio in-place. No intermediate buffer copies between stage
 ```
 
 Parameter changes (gain, threshold, width) use naturally-aligned `Float` stores, which are atomic on ARM64. No explicit synchronization is needed for single-value parameter updates. Preset changes that modify multiple parameters should be applied outside the render callback or accepted as briefly inconsistent (individual parameters will never tear).
+
+All value types (`EQPreset`, `EQBand`, `CompressorPreset`, `CompressorBandSettings`) conform to `Sendable`, `Hashable`, and `Codable`. Enums use `@frozen` for ABI stability and switch optimization. Processor classes are intentionally non-`Sendable` — they are designed for single-owner use on one thread.
 
 ## Buffer Formats
 

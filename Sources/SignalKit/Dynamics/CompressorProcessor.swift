@@ -1,13 +1,12 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
 import Accelerate
 
 // MARK: - Band Settings
 
 /// Envelope detection mode for compressor bands.
-public enum DetectionMode: String, Codable, Equatable {
+@frozen public enum DetectionMode: String, Codable, Sendable {
     /// Track instantaneous peaks. Fast response, catches transients.
     case peak
     /// Track perceived loudness (RMS power). Smoother, more musical.
@@ -15,7 +14,7 @@ public enum DetectionMode: String, Codable, Equatable {
 }
 
 /// Per-band compressor configuration.
-public struct CompressorBandSettings: Codable, Equatable {
+public struct CompressorBandSettings: Codable, Hashable, Sendable {
     public var threshold: Float     // dBFS, -60 to 0
     public var ratio: Float         // 1:1 (off) to 20:1 (brick-wall)
     public var attackMs: Float      // 0.1 to 100 ms
@@ -42,7 +41,7 @@ public struct CompressorBandSettings: Codable, Equatable {
 // MARK: - Preset
 
 /// Serializable multiband compressor preset.
-public struct CompressorPreset: Codable, Equatable {
+public struct CompressorPreset: Codable, Hashable, Sendable {
     /// Settings for each frequency band (low, mid, high).
     public var bands: [CompressorBandSettings]
 
@@ -268,14 +267,6 @@ public final class CompressorProcessor: AudioProcessor {
         // Recombine: output = low + mid + high
         vDSP_vadd(scratchLow, 1, scratchMid, 1, samples, 1, vDSP_Length(count))
         vDSP_vadd(samples, 1, scratchHigh, 1, samples, 1, vDSP_Length(count))
-    }
-
-    /// Process stereo pair. Convenience wrapper.
-    public func process(left: UnsafeMutablePointer<Float>,
-                        right: UnsafeMutablePointer<Float>,
-                        count: Int) {
-        process(left, count: count, channel: 0)
-        process(right, count: count, channel: 1)
     }
 
     // MARK: - Crossover

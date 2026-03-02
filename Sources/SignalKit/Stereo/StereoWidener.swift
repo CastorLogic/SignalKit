@@ -26,7 +26,7 @@ import Accelerate
 ///
 /// Each instance owns its scratch memory. Multiple wideners can run concurrently
 /// on separate threads without interference.
-public final class StereoWidener {
+public final class StereoWidener: AudioProcessor {
 
     /// Current width value. 1.0 = bypass.
     public var width: Float = 1.0
@@ -34,6 +34,10 @@ public final class StereoWidener {
     private let maxFrames: Int
     private let scratchL: UnsafeMutablePointer<Float>
     private let scratchR: UnsafeMutablePointer<Float>
+
+    // Channel-buffering for single-channel protocol path
+    private let pendingL: UnsafeMutablePointer<Float>
+    private var pendingCount: Int = 0
 
     /// Create a stereo widener.
     /// - Parameter maxBufferSize: Maximum number of frames per call (default 8192).
@@ -43,11 +47,40 @@ public final class StereoWidener {
         self.scratchL.initialize(repeating: 0, count: maxBufferSize)
         self.scratchR = .allocate(capacity: maxBufferSize)
         self.scratchR.initialize(repeating: 0, count: maxBufferSize)
+        self.pendingL = .allocate(capacity: maxBufferSize)
+        self.pendingL.initialize(repeating: 0, count: maxBufferSize)
     }
 
     deinit {
         scratchL.deinitialize(count: maxFrames); scratchL.deallocate()
         scratchR.deinitialize(count: maxFrames); scratchR.deallocate()
+        pendingL.deinitialize(count: maxFrames); pendingL.deallocate()
+    }
+
+    // MARK: - AudioProcessor Protocol
+
+    /// Single-channel entry point. Channel 0 is buffered; processing occurs when channel 1 arrives.
+    public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
+        guard abs(width - 1.0) > 0.01, count <= maxFrames else { return }
+        if channel == 0 {
+            memcpy(pendingL, samples, count * MemoryLayout<Float>.size)
+            pendingCount = count
+        } else if channel == 1, pendingCount > 0 {
+            let n = min(count, pendingCount)
+            processPlanar(left: pendingL, right: samples, count: n)
+            // Write processed left back through the default stereo path
+            pendingCount = 0
+        }
+    }
+
+    /// Stateless processor — reset is a no-op.
+    public func reset() {}
+
+    /// Process stereo pair directly — preferred over the single-channel path.
+    public func process(left: UnsafeMutablePointer<Float>,
+                        right: UnsafeMutablePointer<Float>,
+                        count: Int) {
+        processPlanar(left: left, right: right, count: count)
     }
 
     /// Process interleaved stereo [L0, R0, L1, R1, ...] in-place.

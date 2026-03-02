@@ -1,7 +1,7 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
+import Darwin
 
 // MARK: - Peak Limiter
 
@@ -34,8 +34,8 @@ public final class LimiterProcessor: AudioProcessor {
     private var ceilingLinear: Float = 1.0
     private let lookAheadSamples: Int
     private var ringBuffer: UnsafeMutablePointer<Float>
-    private var ringPos: [Int]
-    private var envelope: [Float]
+    private var ringPos: UnsafeMutablePointer<Int>
+    private var envelope: UnsafeMutablePointer<Float>
     private let releaseCoeff: Float
     private let maxChannels: Int
 
@@ -49,8 +49,10 @@ public final class LimiterProcessor: AudioProcessor {
         self.ringBuffer = .allocate(capacity: ringSize)
         self.ringBuffer.initialize(repeating: 0, count: ringSize)
 
-        self.ringPos  = [Int](repeating: 0, count: maxChannels)
-        self.envelope = [Float](repeating: 0, count: maxChannels)
+        self.ringPos = .allocate(capacity: maxChannels)
+        self.ringPos.initialize(repeating: 0, count: maxChannels)
+        self.envelope = .allocate(capacity: maxChannels)
+        self.envelope.initialize(repeating: 0, count: maxChannels)
 
         // ~50 ms release: coeff = exp(−1 / (time_s × Fs))
         let releaseSamples = max(1.0, 0.050 * sampleRate)
@@ -59,8 +61,9 @@ public final class LimiterProcessor: AudioProcessor {
 
     deinit {
         let ringSize = lookAheadSamples * maxChannels
-        ringBuffer.deinitialize(count: ringSize)
-        ringBuffer.deallocate()
+        ringBuffer.deinitialize(count: ringSize); ringBuffer.deallocate()
+        ringPos.deinitialize(count: maxChannels); ringPos.deallocate()
+        envelope.deinitialize(count: maxChannels); envelope.deallocate()
     }
 
     /// Process a single channel in-place.
@@ -108,22 +111,12 @@ public final class LimiterProcessor: AudioProcessor {
         gainReductionDB = max(grDB, prevGR * 0.9)
     }
 
-    /// Process stereo pair.
-    public func process(left: UnsafeMutablePointer<Float>,
-                        right: UnsafeMutablePointer<Float>,
-                        count: Int) {
-        process(left, count: count, channel: 0)
-        process(right, count: count, channel: 1)
-    }
-
     /// Clear delay lines and envelope state.
     public func reset() {
         let ringSize = lookAheadSamples * maxChannels
-        ringBuffer.initialize(repeating: 0, count: ringSize)
-        for ch in 0..<maxChannels {
-            ringPos[ch] = 0
-            envelope[ch] = 0
-        }
+        memset(ringBuffer, 0, ringSize * MemoryLayout<Float>.size)
+        memset(ringPos, 0, maxChannels * MemoryLayout<Int>.size)
+        memset(envelope, 0, maxChannels * MemoryLayout<Float>.size)
         gainReductionDB = 0
     }
 }

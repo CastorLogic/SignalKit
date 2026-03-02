@@ -1,8 +1,6 @@
 // SignalKit — Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
-import Foundation
-
 /// Shared interface for real-time audio processors.
 ///
 /// All conforming types guarantee real-time safety in their `process` methods:

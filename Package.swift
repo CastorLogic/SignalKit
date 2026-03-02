@@ -34,5 +34,6 @@ let package = Package(
             path: "Benchmarks",
             exclude: ["baseline.json", "latest.json"]
         )
-    ]
+    ],
+    swiftLanguageVersions: [.v5]
 )
