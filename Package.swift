@@ -31,7 +31,8 @@ let package = Package(
         .executableTarget(
             name: "Benchmarks",
             dependencies: ["SignalKit"],
-            path: "Benchmarks"
+            path: "Benchmarks",
+            exclude: ["baseline.json", "latest.json"]
         )
     ]
 )
