@@ -40,20 +40,12 @@ public let kEQFrequencies: [Float] = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8
 /// Human-readable labels for each band.
 public let kEQLabels: [String] = ["31", "62", "125", "250", "500", "1K", "2K", "4K", "8K", "16K"]
 
-/// Indices for a simplified 3-band interface mapped into the 10-band array.
-public enum EQSimpleBand: Int {
-    case bass = 3    // 250 Hz
-    case mid = 5     // 1 kHz
-    case treble = 7  // 4 kHz
-}
+
 
 // MARK: - Preset
 
 /// Serializable 10-band EQ preset.
-///
-/// Backward-compatible: decodes the legacy 3-field format (bassGain/midGain/trebleGain)
-/// and maps it into the 10-band gains array.
-public struct EQPreset: Equatable {
+public struct EQPreset: Codable, Equatable {
     /// Per-band gain in dB. Indices 0–9 correspond to `kEQFrequencies`.
     public var gains: [Float]
 
@@ -61,28 +53,6 @@ public struct EQPreset: Equatable {
         self.gains = gains ?? Array(repeating: 0, count: kEQBandCount)
         while self.gains.count < kEQBandCount { self.gains.append(0) }
         if self.gains.count > kEQBandCount { self.gains = Array(self.gains.prefix(kEQBandCount)) }
-    }
-
-    /// 3-band convenience for simple bass/mid/treble control.
-    public init(bassGain: Float = 0, midGain: Float = 0, trebleGain: Float = 0) {
-        var g = Array(repeating: Float(0), count: kEQBandCount)
-        g[EQSimpleBand.bass.rawValue] = bassGain
-        g[EQSimpleBand.mid.rawValue] = midGain
-        g[EQSimpleBand.treble.rawValue] = trebleGain
-        self.gains = g
-    }
-
-    public var bassGain: Float {
-        get { gains[EQSimpleBand.bass.rawValue] }
-        set { gains[EQSimpleBand.bass.rawValue] = newValue }
-    }
-    public var midGain: Float {
-        get { gains[EQSimpleBand.mid.rawValue] }
-        set { gains[EQSimpleBand.mid.rawValue] = newValue }
-    }
-    public var trebleGain: Float {
-        get { gains[EQSimpleBand.treble.rawValue] }
-        set { gains[EQSimpleBand.treble.rawValue] = newValue }
     }
 
     /// True when all bands are at or near 0 dB.
@@ -95,39 +65,15 @@ public struct EQPreset: Equatable {
     /// All bands at 0 dB — passthrough.
     public static let flat = EQPreset()
 
-    /// Gentle low-end boost. Good starting point for music playback.
+    /// Gentle low-end boost.
     //                                        31   62  125  250  500   1K   2K   4K   8K  16K
     public static let bassBoost   = EQPreset(gains: [ 6,  5,   4,   2,   0,   0,  0,   0,   0,   0])
 
-    /// Scooped mids with presence lift. Makes speech and vocals more intelligible.
+    /// Mid-frequency presence lift for speech intelligibility.
     public static let voiceClarity = EQPreset(gains: [-2, -1,   0,   0,   1,   3,  4,   3,   1,   0])
 }
 
-// MARK: - EQPreset Codable (backward-compatible)
 
-extension EQPreset: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case gains
-        case bassGain, midGain, trebleGain
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let gains = try? container.decode([Float].self, forKey: .gains) {
-            self.init(gains: gains)
-        } else {
-            let bass = try container.decodeIfPresent(Float.self, forKey: .bassGain) ?? 0
-            let mid = try container.decodeIfPresent(Float.self, forKey: .midGain) ?? 0
-            let treble = try container.decodeIfPresent(Float.self, forKey: .trebleGain) ?? 0
-            self.init(bassGain: bass, midGain: mid, trebleGain: treble)
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(gains, forKey: .gains)
-    }
-}
 
 // MARK: - EQ Processor
 

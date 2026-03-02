@@ -18,10 +18,7 @@ let package = Package(
     targets: [
         .target(
             name: "SignalKit",
-            dependencies: [],
-            swiftSettings: [
-                .define("SIGNALKIT")
-            ]
+            dependencies: []
         ),
         .executableTarget(
             name: "SignalKitCLI",

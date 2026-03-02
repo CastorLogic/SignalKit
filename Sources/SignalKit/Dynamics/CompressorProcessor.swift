@@ -37,18 +37,6 @@ public struct CompressorBandSettings: Codable, Equatable {
         self.detectionMode = detectionMode
         self.autoMakeup = autoMakeup
     }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        threshold     = try c.decode(Float.self, forKey: .threshold)
-        ratio         = try c.decode(Float.self, forKey: .ratio)
-        attackMs      = try c.decode(Float.self, forKey: .attackMs)
-        releaseMs     = try c.decode(Float.self, forKey: .releaseMs)
-        makeupGain    = try c.decode(Float.self, forKey: .makeupGain)
-        lookaheadMs   = try c.decodeIfPresent(Float.self, forKey: .lookaheadMs) ?? 0
-        detectionMode = try c.decodeIfPresent(DetectionMode.self, forKey: .detectionMode) ?? .peak
-        autoMakeup    = try c.decodeIfPresent(Bool.self, forKey: .autoMakeup) ?? false
-    }
 }
 
 // MARK: - Preset
