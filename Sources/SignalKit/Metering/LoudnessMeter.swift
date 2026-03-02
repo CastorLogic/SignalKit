@@ -7,7 +7,7 @@ import Accelerate
 
 /// LUFS loudness meter and automatic gain control.
 ///
-/// Measures integrated loudness using ITU-R BS.1770-4 K-weighting, then
+/// Measures integrated loudness per ITU-R BS.1770-4 K-weighting, then
 /// optionally applies slow automatic gain correction to normalize audio
 /// toward a target level (default −14 LUFS, the streaming standard).
 ///
@@ -24,7 +24,7 @@ import Accelerate
 ///
 /// - Reference: ITU-R BS.1770-4, "Algorithms to measure audio programme loudness
 ///   and true-peak audio level" (2015)
-public final class LoudnessMeter: AudioProcessor {
+public final class LoudnessMeter: AudioProcessor, @unchecked Sendable {
 
     /// Target loudness in LUFS. Default: −14 (streaming standard).
     public var targetLUFS: Float = -14.0
@@ -162,8 +162,8 @@ public final class LoudnessMeter: AudioProcessor {
             // Window complete — compute LUFS and update target
             if sampleCount >= windowSizeInSamples {
                 let meanSquare = rmsAccumulator / Float(sampleCount)
-                let rms = sqrtf(max(meanSquare, 1e-20))
-                measuredLUFS = 20.0 * log10(max(rms, 1e-10))
+                let z = max(meanSquare, 1e-20)
+                measuredLUFS = -0.691 + 10.0 * log10f(z)
 
                 let correctionDB = max(-maxCorrectionDB,
                                        min(maxCorrectionDB, targetLUFS - measuredLUFS))

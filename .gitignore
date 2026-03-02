@@ -3,8 +3,5 @@
 /Packages
 xcuserdata/
 DerivedData/
-.gemini/
-.agents/
-.netrc
 *.xcodeproj
 Benchmarks/benchmark_*.json

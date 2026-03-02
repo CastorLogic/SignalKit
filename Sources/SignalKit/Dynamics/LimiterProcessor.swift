@@ -17,7 +17,7 @@ import Darwin
 ///
 /// - Note: The look-ahead introduces ~1 ms of latency. For zero-latency limiting,
 ///   set `lookAheadSamples` to 0 (but expect occasional clicks on sharp transients).
-public final class LimiterProcessor: AudioProcessor {
+public final class LimiterProcessor: AudioProcessor, @unchecked Sendable {
 
     /// Output ceiling in dBFS. Default 0 dBFS (digital maximum).
     /// Typical mastering value: −0.3 dBFS.

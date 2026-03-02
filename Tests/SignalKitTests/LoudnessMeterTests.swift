@@ -181,8 +181,8 @@ final class LoudnessMeterTests: XCTestCase {
     // MARK: - ITU Calibration
 
     /// Feed a 1 kHz sine at −23 dBFS (EBU R 128 reference level).
-    /// After measurement settles, verify LUFS reading is within ±2 dB of −23.
-    /// This is the standard test from ITU-R BS.1770 for loudness meter validation.
+    /// K-weighting at 1 kHz is ≈0 dB, so expected LUFS ≈ −0.691 + 10·log10(peak²/2).
+    /// For peak = 10^(−23/20): LUFS ≈ −26.7 dB. Tolerance: ±1.5 dB.
     func testLUFSCalibrationReferenceTone() {
         let meter = LoudnessMeter(sampleRate: 48000)
         meter.applyGain = false
@@ -204,15 +204,12 @@ final class LoudnessMeterTests: XCTestCase {
             meter.process(signal, count: count, channel: 0)
         }
 
-        // K-weighting at 1 kHz is approximately 0 dB (flat in the passband),
-        // so measured LUFS should be close to −23 for a sine at −23 dBFS peak.
-        // Sine RMS is peak/√2 → RMS dBFS ≈ −23 − 3.01 ≈ −26.
-        // But LUFS uses K-weighted mean square, not peak.
-        // For a 1 kHz sine, K-weight gain is ~0 dB, so LUFS ≈ -26 ± offset.
-        // Allow ±3.5 dB tolerance for implementation differences.
-        XCTAssertGreaterThan(meter.measuredLUFS, -30.0,
-                             "1 kHz at -23 dBFS should measure above -30 LUFS (got \(meter.measuredLUFS))")
-        XCTAssertLessThan(meter.measuredLUFS, -20.0,
-                          "Should not exceed -20 LUFS (got \(meter.measuredLUFS))")
+        // Expected: −0.691 + 10 × log10(0.07079² / 2) ≈ −26.7 LUFS
+        // Tolerance: ±1.5 dB (accounts for windowing and filter transient)
+        let expectedLUFS: Float = -26.7
+        XCTAssertGreaterThan(meter.measuredLUFS, expectedLUFS - 1.5,
+                             "1 kHz at -23 dBFS should measure above \(expectedLUFS - 1.5) LUFS (got \(meter.measuredLUFS))")
+        XCTAssertLessThan(meter.measuredLUFS, expectedLUFS + 1.5,
+                          "1 kHz at -23 dBFS should measure below \(expectedLUFS + 1.5) LUFS (got \(meter.measuredLUFS))")
     }
 }

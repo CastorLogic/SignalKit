@@ -19,7 +19,7 @@ import Darwin
 /// head-shadow frequency rolloff.
 ///
 /// - Reference: Bauer, "Stereophonic Earphone Reproduction" (JAES, 1961)
-public final class CrossfeedProcessor: AudioProcessor {
+public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
 
     /// Blend amount. 0 = off, 0.3 = natural crossfeed, 1.0 = mono.
     public var amount: Float = 0.0

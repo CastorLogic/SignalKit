@@ -2,13 +2,14 @@
 
 Pure Swift audio DSP toolkit for real-time signal processing on Apple platforms.
 
+[![CI](https://github.com/CastorLogic/SignalKit/actions/workflows/ci.yml/badge.svg)](https://github.com/CastorLogic/SignalKit/actions/workflows/ci.yml)
 [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9+-orange.svg)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20visionOS-blue.svg)](https://developer.apple.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-SignalKit is a collection of audio processors for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. Zero heap allocations in the process path — no locks, no Objective-C messaging, no hidden `malloc`.
+SignalKit is a collection of audio processors for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. No heap allocations in our code path — no locks, no Objective-C messaging, no hidden `malloc`.
 
 ## Processors
 

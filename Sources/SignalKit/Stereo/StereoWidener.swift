@@ -26,7 +26,7 @@ import Accelerate
 ///
 /// Each instance owns its scratch memory. Multiple wideners can run concurrently
 /// on separate threads without interference.
-public final class StereoWidener: AudioProcessor {
+public final class StereoWidener: AudioProcessor, @unchecked Sendable {
 
     /// Current width value. 1.0 = bypass.
     public var width: Float = 1.0

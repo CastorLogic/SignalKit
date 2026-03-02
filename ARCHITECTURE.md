@@ -81,7 +81,7 @@ Each stage processes audio in-place. No intermediate buffer copies between stage
 │  (RT priority)  │     │  (UI)            │
 │                 │     │                  │
 │  process()      │     │  setGain()       │
-│  (zero alloc)   │     │  apply(preset:)  │
+│  (no alloc)      │     │  apply(preset:)  │
 │                 │     │  reset()         │
 └────────┬────────┘     └────────┬─────────┘
          │                       │

@@ -101,7 +101,7 @@ public struct CompressorPreset: Codable, Hashable, Sendable {
 ///
 /// - Reference: Giannoulis, Massberg & Reiss (2012), https://doi.org/10.1121/1.4822479
 /// - Reference: Linkwitz & Riley (1976), "Active Crossover Networks for Noncoincident Drivers"
-public final class CompressorProcessor: AudioProcessor {
+public final class CompressorProcessor: AudioProcessor, @unchecked Sendable {
 
     private let bandCount = 3
     private let crossoverFreqs: [Double] = [250.0, 4000.0]

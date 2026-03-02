@@ -8,7 +8,7 @@ import Darwin
 /// Lock-free single-producer/single-consumer ring buffer for real-time audio.
 ///
 /// Designed to decouple two clock domains — e.g., a capture callback writing
-/// at 48 kHz and a playback callback reading at 44.1 kHz (Bluetooth). Both
+/// at one sample rate and a render callback reading at another. Both
 /// threads can operate simultaneously without locks.
 ///
 /// Overflow policy: writer advances the read pointer (drops oldest frames).
@@ -24,7 +24,7 @@ import Darwin
 ///
 /// - Note: This is a SPSC structure. Using multiple writers or multiple
 ///   readers concurrently is undefined behavior.
-public final class SPSCRingBuffer {
+public final class SPSCRingBuffer: @unchecked Sendable {
     private let capacity: Int
     private let channels: Int
     private let buffer: UnsafeMutablePointer<Float>

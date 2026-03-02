@@ -91,11 +91,11 @@ public struct EQPreset: Codable, Hashable, Sendable {
 /// on Apple Silicon. Coefficients follow the RBJ Audio EQ Cookbook
 /// (Bristow-Johnson, 1998).
 ///
-/// Real-time safe: `process()` performs zero heap allocations. All scratch buffers
+/// Real-time safe: `process()` makes no heap allocations in our code path. All scratch buffers
 /// are pre-allocated at init. Coefficients are updated from the control thread via
 /// `setGain(_:forBand:)` and read lock-free by the audio thread — the worst case
 /// is processing one callback with stale coefficients, which is inaudible.
-public final class EQProcessor: AudioProcessor {
+public final class EQProcessor: AudioProcessor, @unchecked Sendable {
 
     public private(set) var bands: [EQBand]
 

@@ -4,7 +4,7 @@
 /// Shared interface for real-time audio processors.
 ///
 /// All conforming types guarantee real-time safety in their `process` methods:
-/// no heap allocations, no locks, no Objective-C messaging. Safe to call from
+/// no heap allocations in our code path, no locks, no Objective-C messaging. Safe to call from
 /// CoreAudio IOProc and Audio Unit render callbacks.
 public protocol AudioProcessor: AnyObject {
     /// Process a single channel of audio samples in-place.
@@ -28,6 +28,7 @@ public protocol AudioProcessor: AnyObject {
 
 /// Default stereo implementation — processors only need to implement single-channel.
 public extension AudioProcessor {
+    @inlinable
     func process(left: UnsafeMutablePointer<Float>,
                  right: UnsafeMutablePointer<Float>,
                  count: Int) {
