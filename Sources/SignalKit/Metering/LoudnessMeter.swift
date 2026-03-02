@@ -78,22 +78,56 @@ public final class LoudnessMeter: AudioProcessor {
         self.kWeightScratch = .allocate(capacity: maxScratchSize)
         self.kWeightScratch.initialize(repeating: 0, count: maxScratchSize)
 
-        // Stage 1: Pre-filter (head acoustic model high-shelf)
-        self.kWeightCoeffsStage1 = [
-             1.53512485958697,   // b0
-            -2.69169618940638,   // b1
-             1.19839281085285,   // b2
-            -1.69065929318241,   // a1
-             0.73248077421585    // a2
-        ]
+        // K-weighting filter design.
+        // At 48 kHz the coefficients match ITU-R BS.1770-4 Table 1/2 exactly.
+        // At other rates they are recomputed to preserve the analog response.
+        let fs = sampleRate
+        if abs(fs - 48000.0) < 1.0 {
+            self.kWeightCoeffsStage1 = [
+                 1.53512485958697,
+                -2.69169618940638,
+                 1.19839281085285,
+                -1.69065929318241,
+                 0.73248077421585
+            ]
+        } else {
+            // 2nd-order shelf via RBJ high-shelf at 1500 Hz with +4 dB
+            let A = pow(10.0, 4.0 / 40.0)
+            let w0h = 2.0 * Double.pi * 1500.97 / fs
+            let alphaH = sin(w0h) / 2.0 * sqrt((A + 1.0/A) * (1.0/0.707 - 1.0) + 2.0)
+            let cosW0h = cos(w0h)
+            let twoSqrtAalpha = 2.0 * sqrt(A) * alphaH
 
-        // Stage 2: Revised low-frequency high-pass (~38 Hz)
+            let b0h =        A * ((A + 1) + (A - 1) * cosW0h + twoSqrtAalpha)
+            let b1h = -2.0 * A * ((A - 1) + (A + 1) * cosW0h)
+            let b2h =        A * ((A + 1) + (A - 1) * cosW0h - twoSqrtAalpha)
+            let a0h =             (A + 1) - (A - 1) * cosW0h + twoSqrtAalpha
+            let a1h =       2.0 * ((A - 1) - (A + 1) * cosW0h)
+            let a2h =             (A + 1) - (A - 1) * cosW0h - twoSqrtAalpha
+
+            self.kWeightCoeffsStage1 = [
+                Float(b0h/a0h), Float(b1h/a0h), Float(b2h/a0h),
+                Float(a1h/a0h), Float(a2h/a0h)
+            ]
+        }
+
+        // Stage 2: High-pass at ~38 Hz (2nd-order Butterworth)
+        let fc2 = 38.13547087602444
+        let w0lp = 2.0 * Double.pi * fc2 / fs
+        let cosW0lp = cos(w0lp)
+        let sinW0lp = sin(w0lp)
+        let alphaLP = sinW0lp / (2.0 * sqrt(2.0))
+
+        let b0lp =  (1.0 + cosW0lp) / 2.0
+        let b1lp = -(1.0 + cosW0lp)
+        let b2lp =  (1.0 + cosW0lp) / 2.0
+        let a0lp =   1.0 + alphaLP
+        let a1lp =  -2.0 * cosW0lp
+        let a2lp =   1.0 - alphaLP
+
         self.kWeightCoeffsStage2 = [
-             1.0,                // b0
-            -2.0,                // b1
-             1.0,                // b2
-            -1.99004745483398,   // a1
-             0.99007225036621    // a2
+            Float(b0lp/a0lp), Float(b1lp/a0lp), Float(b2lp/a0lp),
+            Float(a1lp/a0lp), Float(a2lp/a0lp)
         ]
     }
 

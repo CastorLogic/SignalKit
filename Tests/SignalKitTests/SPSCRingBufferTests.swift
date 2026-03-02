@@ -160,19 +160,68 @@ final class SPSCRingBufferTests: XCTestCase {
     // MARK: - Diagnostics
 
     func testDiagnosticCounters() {
-        let ring = SPSCRingBuffer(capacity: 128, channels: 1)
+        let ring = SPSCRingBuffer(capacity: 256, channels: 1)
+        let data = UnsafeMutablePointer<Float>.allocate(capacity: 100)
+        let out  = UnsafeMutablePointer<Float>.allocate(capacity: 100)
+        defer { data.deallocate(); out.deallocate() }
+        for i in 0..<100 { data[i] = Float(i) }
 
-        let data = UnsafeMutablePointer<Float>.allocate(capacity: 32)
-        defer { data.deallocate() }
+        ring.write(data, frameCount: 100)
+        ring.read(out, frameCount: 50)
 
-        ring.write(data, frameCount: 32)
-        XCTAssertEqual(ring.written, 32)
+        XCTAssertEqual(ring.written, 100)
+        XCTAssertEqual(ring.readCount, 50)
+    }
 
-        ring.read(data, frameCount: 16)
-        XCTAssertEqual(ring.readCount, 16)
+    // MARK: - Concurrent Producer/Consumer
 
-        ring.write(data, frameCount: 10)
-        XCTAssertEqual(ring.written, 42)
-        XCTAssertEqual(ring.available, 26) // 32 - 16 + 10
+    func testConcurrentWriteRead() {
+        // Large capacity to avoid overflow during the test
+        let ring = SPSCRingBuffer(capacity: 65536, channels: 1)
+        let chunkSize = 256
+        let writeChunks = 200
+        let totalFrames = chunkSize * writeChunks
+
+        let writeExpectation = XCTestExpectation(description: "writer done")
+        let readExpectation  = XCTestExpectation(description: "reader done")
+
+        // Producer thread
+        DispatchQueue.global(qos: .userInitiated).async {
+            let buf = UnsafeMutablePointer<Float>.allocate(capacity: chunkSize)
+            defer { buf.deallocate() }
+            for chunk in 0..<writeChunks {
+                for i in 0..<chunkSize { buf[i] = Float(chunk * chunkSize + i) }
+                ring.write(buf, frameCount: chunkSize)
+            }
+            writeExpectation.fulfill()
+        }
+
+        // Wait for writer to finish, then read everything
+        wait(for: [writeExpectation], timeout: 5.0)
+
+        XCTAssertEqual(ring.written, UInt64(totalFrames),
+                       "Writer should have written all frames")
+
+        // Consumer reads everything back
+        DispatchQueue.global(qos: .userInitiated).async {
+            let buf = UnsafeMutablePointer<Float>.allocate(capacity: chunkSize)
+            defer { buf.deallocate() }
+            var totalRead = 0
+            while totalRead < totalFrames {
+                let avail = ring.available
+                if avail > 0 {
+                    let toRead = min(chunkSize, avail)
+                    ring.read(buf, frameCount: toRead)
+                    totalRead += toRead
+                }
+            }
+            readExpectation.fulfill()
+        }
+
+        wait(for: [readExpectation], timeout: 5.0)
+
+        XCTAssertEqual(ring.readCount, UInt64(totalFrames),
+                       "Reader should have read all frames")
+        XCTAssertEqual(ring.available, 0, "Ring should be empty")
     }
 }

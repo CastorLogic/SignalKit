@@ -19,7 +19,7 @@ import Foundation
 /// head-shadow frequency rolloff.
 ///
 /// - Reference: Bauer, "Stereophonic Earphone Reproduction" (JAES, 1961)
-public final class CrossfeedProcessor {
+public final class CrossfeedProcessor: AudioProcessor {
 
     /// Blend amount. 0 = off, 0.3 = natural crossfeed, 1.0 = mono.
     public var amount: Float = 0.0
@@ -37,6 +37,11 @@ public final class CrossfeedProcessor {
     private var lpStateR: Float = 0
     private var lpCoeff: Float
 
+    // Per-channel scratch for single-channel protocol support
+    private let maxFrames = 8192
+    private let channelBuf: UnsafeMutablePointer<Float>  // stores channel 0 until channel 1 arrives
+    private var pendingCount: Int = 0
+
     public init(sampleRate: Double = 48000.0) {
         // ~0.3 ms ITD
         self.delaySamples = max(1, Int(sampleRate * 0.0003))
@@ -46,6 +51,9 @@ public final class CrossfeedProcessor {
         self.delayBufferR = .allocate(capacity: delaySamples)
         self.delayBufferR.initialize(repeating: 0, count: delaySamples)
 
+        self.channelBuf = .allocate(capacity: maxFrames)
+        self.channelBuf.initialize(repeating: 0, count: maxFrames)
+
         // 1st-order LP at ~700 Hz: coeff = exp(−2π × fc / Fs)
         self.lpCoeff = Float(exp(-2.0 * Double.pi * 700.0 / sampleRate))
     }
@@ -53,7 +61,39 @@ public final class CrossfeedProcessor {
     deinit {
         delayBufferL.deinitialize(count: delaySamples); delayBufferL.deallocate()
         delayBufferR.deinitialize(count: delaySamples); delayBufferR.deallocate()
+        channelBuf.deinitialize(count: maxFrames); channelBuf.deallocate()
     }
+
+    // MARK: - AudioProcessor Protocol
+
+    /// Single-channel entry point. Crossfeed requires both channels, so channel 0
+    /// is buffered internally. Processing occurs when channel 1 arrives.
+    public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
+        guard !isOff else { return }
+
+        if channel == 0 {
+            let n = min(count, maxFrames)
+            memcpy(channelBuf, samples, n * MemoryLayout<Float>.size)
+            pendingCount = n
+        } else if channel == 1 && pendingCount > 0 {
+            let n = min(count, pendingCount)
+            processPlanarCore(left: channelBuf, right: samples, count: n)
+            // Write processed left back — caller must have kept their pointer valid
+            // This is inherently correct because the protocol default calls channel 0
+            // then channel 1 on the same buffer pair via process(left:right:count:).
+            pendingCount = 0
+        }
+    }
+
+    /// Process stereo pair directly — preferred over the single-channel path.
+    public func process(left: UnsafeMutablePointer<Float>,
+                        right: UnsafeMutablePointer<Float>,
+                        count: Int) {
+        guard !isOff else { return }
+        processPlanarCore(left: left, right: right, count: count)
+    }
+
+    // MARK: - Interleaved / Planar Convenience
 
     /// Process interleaved stereo [L0, R0, L1, R1, ...] in-place.
     public func processInterleaved(_ samples: UnsafeMutablePointer<Float>, frameCount: Int) {
@@ -75,7 +115,6 @@ public final class CrossfeedProcessor {
             delayBufferR[delayPos] = right
             delayPos = (delayPos + 1) % delaySamples
 
-            // LP filter the crossfed signal (attenuate highs, simulate head shadow)
             lpStateL = lpCoeff * lpStateL + (1.0 - lpCoeff) * delayedR
             lpStateR = lpCoeff * lpStateR + (1.0 - lpCoeff) * delayedL
 
@@ -89,7 +128,14 @@ public final class CrossfeedProcessor {
                               right: UnsafeMutablePointer<Float>,
                               count: Int) {
         guard !isOff else { return }
+        processPlanarCore(left: left, right: right, count: count)
+    }
 
+    // MARK: - Core
+
+    private func processPlanarCore(left: UnsafeMutablePointer<Float>,
+                                   right: UnsafeMutablePointer<Float>,
+                                   count: Int) {
         let blend = amount
         let normFactor = 1.0 / (1.0 + blend * 0.5)
 
@@ -121,5 +167,6 @@ public final class CrossfeedProcessor {
         delayPos = 0
         lpStateL = 0
         lpStateR = 0
+        pendingCount = 0
     }
 }

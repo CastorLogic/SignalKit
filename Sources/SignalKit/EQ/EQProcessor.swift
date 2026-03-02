@@ -71,6 +71,15 @@ public struct EQPreset: Codable, Equatable {
 
     /// Mid-frequency presence lift for speech intelligibility.
     public static let voiceClarity = EQPreset(gains: [-2, -1,   0,   0,   1,   3,  4,   3,   1,   0])
+
+    /// Rock/pop: scooped mids, boosted lows and highs.
+    public static let rock = EQPreset(gains: [ 5,  4,   2,  -1,  -2,  -1,  2,   4,   5,   4])
+
+    /// Acoustic instruments: warm low-mids, gentle treble lift.
+    public static let acoustic = EQPreset(gains: [ 2,  3,   3,   2,   1,   0,  1,   2,   2,   1])
+
+    /// Fletcher-Munson loudness contour for low-volume listening.
+    public static let loudness = EQPreset(gains: [ 6,  5,   3,   0,  -1,   0,  0,   1,   3,   5])
 }
 
 
@@ -306,7 +315,10 @@ public final class EQProcessor: AudioProcessor {
     private func clearDelays() {
         for band in 0..<delays.count {
             for ch in 0..<delays[band].count {
-                delays[band][ch] = [0, 0, 0, 0]
+                delays[band][ch][0] = 0
+                delays[band][ch][1] = 0
+                delays[band][ch][2] = 0
+                delays[band][ch][3] = 0
             }
         }
     }

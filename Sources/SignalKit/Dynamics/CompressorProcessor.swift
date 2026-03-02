@@ -479,18 +479,24 @@ public final class CompressorProcessor: AudioProcessor {
         for ci in 0..<2 {
             for stage in 0..<2 {
                 for ch in 0..<maxChannels {
-                    lpDelays[ci][stage][ch] = [0, 0, 0, 0]
-                    hpDelays[ci][stage][ch] = [0, 0, 0, 0]
+                    lpDelays[ci][stage][ch][0] = 0
+                    lpDelays[ci][stage][ch][1] = 0
+                    lpDelays[ci][stage][ch][2] = 0
+                    lpDelays[ci][stage][ch][3] = 0
+                    hpDelays[ci][stage][ch][0] = 0
+                    hpDelays[ci][stage][ch][1] = 0
+                    hpDelays[ci][stage][ch][2] = 0
+                    hpDelays[ci][stage][ch][3] = 0
                 }
             }
         }
         for band in 0..<bandCount {
             for ch in 0..<maxChannels {
                 envelopes[band][ch] = 0
-                lookaheadBuffers[band][ch].initialize(repeating: 0, count: maxLookaheadSamples)
+                memset(lookaheadBuffers[band][ch], 0, maxLookaheadSamples * MemoryLayout<Float>.size)
                 lookaheadWriteIdx[band][ch] = 0
             }
         }
-        gainReduction = [Float](repeating: 0, count: bandCount)
+        for i in 0..<bandCount { gainReduction[i] = 0 }
     }
 }
