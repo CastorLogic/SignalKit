@@ -165,4 +165,42 @@ final class StereoTests: XCTestCase {
             XCTAssertEqual(right[i], 0, accuracy: 1e-5)
         }
     }
+
+    // MARK: - StereoWidener Mono Collapse
+
+    /// Width=0 must produce identical L and R (mono collapse).
+    /// This is the M/S identity: Side=0 → L = R = (L+R)/2.
+    /// Also serves as a regression test for the left-channel bug
+    /// (left data not written back through the protocol path).
+    func testMonoCollapseViaProtocolPath() {
+        let widener = StereoWidener()
+        widener.width = 0.0
+
+        let count = 256
+        let left = UnsafeMutablePointer<Float>.allocate(capacity: count)
+        let right = UnsafeMutablePointer<Float>.allocate(capacity: count)
+        defer { left.deallocate(); right.deallocate() }
+
+        // Different signals on L and R
+        for i in 0..<count {
+            left[i]  = sinf(2.0 * .pi * 440.0 * Float(i) / 48000.0)
+            right[i] = sinf(2.0 * .pi * 880.0 * Float(i) / 48000.0)
+        }
+
+        // Use the AudioProcessor protocol path (the one that had the bug)
+        widener.process(left: left, right: right, count: count)
+
+        // After mono collapse, L and R should be identical
+        for i in 0..<count {
+            XCTAssertEqual(left[i], right[i], accuracy: 1e-5,
+                           "Width=0 should produce identical L/R at sample \(i)")
+        }
+
+        // Verify the mono value is (original_L + original_R) / 2
+        // Recompute expected mono for spot check at sample 100
+        let expectedMono = (sinf(2.0 * .pi * 440.0 * 100.0 / 48000.0)
+                          + sinf(2.0 * .pi * 880.0 * 100.0 / 48000.0)) / 2.0
+        XCTAssertEqual(left[100], expectedMono, accuracy: 1e-4,
+                       "Mono value should be (L+R)/2")
+    }
 }

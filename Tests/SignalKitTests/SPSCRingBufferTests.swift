@@ -224,4 +224,46 @@ final class SPSCRingBufferTests: XCTestCase {
                        "Reader should have read all frames")
         XCTAssertEqual(ring.available, 0, "Ring should be empty")
     }
+
+    // MARK: - Overflow Policy
+
+    /// When the writer overflows the ring, the oldest unread frames should be
+    /// dropped and only the newest data is available for reading.
+    /// This documents the overflow policy: writer advances read pointer.
+    func testOverflowPreservesNewest() {
+        let capacity = 16
+        let ring = SPSCRingBuffer(capacity: capacity, channels: 1)
+
+        let writeBuf = UnsafeMutablePointer<Float>.allocate(capacity: capacity)
+        let readBuf  = UnsafeMutablePointer<Float>.allocate(capacity: capacity)
+        defer { writeBuf.deallocate(); readBuf.deallocate() }
+
+        // Write more than capacity — two full batches
+        for i in 0..<capacity { writeBuf[i] = Float(i) }
+        ring.write(writeBuf, frameCount: capacity - 1) // fill to max (capacity - 1)
+
+        // Second write forces overflow
+        for i in 0..<8 { writeBuf[i] = Float(100 + i) }
+        ring.write(writeBuf, frameCount: 8)
+
+        // Available should not exceed capacity - 1
+        XCTAssertLessThanOrEqual(ring.available, capacity - 1,
+                                 "Available should never exceed capacity - 1")
+
+        // Read everything back
+        let avail = ring.available
+        ring.read(readBuf, frameCount: avail)
+
+        // The newest values (100+) should be present
+        var foundNewest = false
+        for i in 0..<avail {
+            if readBuf[i] >= 100 { foundNewest = true; break }
+        }
+        XCTAssertTrue(foundNewest,
+                      "Overflow should preserve newest data, not oldest")
+
+        // Total written should count all writes, even overflowed ones
+        XCTAssertEqual(ring.written, UInt64(capacity - 1 + 8),
+                       "Written counter should include overflowed frames")
+    }
 }

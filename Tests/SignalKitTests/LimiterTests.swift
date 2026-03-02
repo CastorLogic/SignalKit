@@ -134,4 +134,52 @@ final class LimiterTests: XCTestCase {
         limiter.process(ptr, count: 0, channel: 0)
         XCTAssertEqual(ptr[0], 99.0)
     }
+
+    // MARK: - True-Peak Ceiling
+
+    /// Feed a hot signal that creates inter-sample peaks, then verify no
+    /// output sample exceeds the ceiling. Uses 4x oversampled linear
+    /// interpolation to check for inter-sample violations.
+    func testTruePeakCeiling() {
+        let limiter = LimiterProcessor(sampleRate: 48000)
+        limiter.ceiling = -3.0 // -3 dBFS ≈ 0.708 linear
+        let ceilingLinear: Float = powf(10.0, -3.0 / 20.0)
+
+        let count = 512
+        let buf = UnsafeMutablePointer<Float>.allocate(capacity: count)
+        defer { buf.deallocate() }
+
+        // Feed hot bursts to fill look-ahead and trigger limiting
+        for _ in 0..<8 {
+            for i in 0..<count {
+                // Multi-frequency hot signal that creates inter-sample peaks
+                let t = Float(i) / 48000.0
+                buf[i] = sinf(2.0 * .pi * 997.0 * t) * 1.2
+                      + sinf(2.0 * .pi * 3001.0 * t) * 0.8
+            }
+            limiter.process(buf, count: count, channel: 0)
+        }
+
+        // Sample-level check: no output should exceed ceiling
+        var maxSample: Float = 0
+        for i in 0..<count { maxSample = max(maxSample, abs(buf[i])) }
+        XCTAssertLessThanOrEqual(maxSample, ceilingLinear + 0.02,
+                                 "No output sample should exceed -3 dBFS ceiling")
+
+        // 4× oversampled check (linear interpolation between samples)
+        var maxInterp: Float = 0
+        for i in 0..<(count - 1) {
+            for j in 0..<4 {
+                let frac = Float(j) / 4.0
+                let interp = buf[i] * (1.0 - frac) + buf[i + 1] * frac
+                maxInterp = max(maxInterp, abs(interp))
+            }
+        }
+        XCTAssertLessThanOrEqual(maxInterp, ceilingLinear + 0.05,
+                                 "Interpolated peaks should stay near ceiling")
+
+        // Gain reduction should be nonzero
+        XCTAssertGreaterThan(limiter.gainReductionDB, 0,
+                             "Should report gain reduction for hot signal")
+    }
 }

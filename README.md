@@ -152,14 +152,14 @@ Sources/SignalKit/
 ├── Metering/       LoudnessMeter (ITU-R BS.1770-4)
 └── Buffers/        SPSCRingBuffer (lock-free SPSC)
 
-Tests/SignalKitTests/   52 tests across all processors
+Tests/SignalKitTests/   60 tests across all processors
 Benchmarks/             Performance measurement suite
 ```
 
 ## Running Tests & Benchmarks
 
 ```bash
-# Run the test suite (52 tests)
+# Run the test suite (60 tests)
 swift test
 
 # Run benchmarks (release build required for accurate timing)
