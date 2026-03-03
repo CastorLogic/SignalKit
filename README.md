@@ -9,7 +9,7 @@ Pure Swift audio DSP toolkit for real-time signal processing on Apple platforms.
 
 ---
 
-SignalKit is a collection of audio processors for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. No heap allocations in our code path — no locks, no Objective-C messaging, no hidden `malloc`.
+SignalKit is a collection of audio processors for real-time use in CoreAudio IOProc callbacks, Audio Unit render threads, and `AVAudioEngine` tap blocks. No heap allocations in our code path: no locks, no Objective-C messaging, no hidden `malloc`.
 
 ## Processors
 
@@ -113,25 +113,25 @@ Measured on Apple Silicon (M-series), 512 frames at 48 kHz, release build, 5000 
 | SPSC Ring Buffer | 0.08 μs | < 0.01% |
 | **Full Pipeline** | **37.79 μs** | **0.35%** |
 
-The full pipeline — EQ, compressor, limiter, stereo widener, and LUFS metering — uses **0.35% of one core's real-time budget** at 48 kHz / 512 frames (10,667 μs deadline).
+The full pipeline. EQ, compressor, limiter, stereo widener, and LUFS metering. uses **0.35% of one core's real-time budget** at 48 kHz / 512 frames (10,667 μs deadline).
 
 > Benchmarks measure isolated DSP processing time per stereo buffer. System overhead (CoreAudio callbacks, thread scheduling, IPC) depends on your application architecture and is not included. Reproduce locally with `swift run -c release Benchmarks`.
 
 ### Design Choices That Affect Performance
 
-- **`vDSP_deq22`** for biquad filters — Apple's SIMD-optimized IIR implementation, processing up to 4 samples per cycle via NEON on Apple Silicon.
-- **Pre-allocated buffers** — every processor allocates its workspace at `init()`. The `process()` path touches only stack variables and pre-existing heap memory.
-- **Linear-domain math** in the limiter — avoids `log`/`exp` in the hot loop. Only the metering output uses `log10`.
-- **`public final class`** — enables devirtualization, letting the compiler inline method dispatch.
+- **`vDSP_deq22`** for biquad filters. Apple's SIMD-optimized IIR implementation, processing up to 4 samples per cycle via NEON on Apple Silicon.
+- **Pre-allocated buffers**: every processor allocates its workspace at `init()`. The `process()` path touches only stack variables and pre-existing heap memory.
+- **Linear-domain math** in the limiter: avoids `log`/`exp` in the hot loop. Only the metering output uses `log10`.
+- **`public final class`**. enables devirtualization, letting the compiler inline method dispatch.
 
 ## Real-Time Safety
 
 All processors follow these rules in their `process()` methods:
 
-- **No heap allocations** — no `malloc`, no `Array.append`, no string formatting
-- **No locks** — no `os_unfair_lock`, no `DispatchSemaphore`, no `@synchronized`
-- **No Objective-C messaging** — no `objc_msgSend`, which can trigger the ObjC runtime lock
-- **No Swift runtime calls** — no ARC retain/release on the audio thread
+- **No heap allocations**: no `malloc`, no `Array.append`, no string formatting
+- **No locks**: no `os_unfair_lock`, no `DispatchSemaphore`, no `@synchronized`
+- **No Objective-C messaging**: no `objc_msgSend`, which can trigger the ObjC runtime lock
+- **No Swift runtime calls**: no ARC retain/release on the audio thread
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full real-time safety guide.
 
@@ -171,15 +171,15 @@ swift run -c release Benchmarks
 
 The DSP implementations reference the following:
 
-- R. Bristow-Johnson, "Audio EQ Cookbook" — biquad filter coefficient formulas
+- R. Bristow-Johnson, "Audio EQ Cookbook". biquad filter coefficient formulas
 - D. Giannoulis et al., "Digital Dynamic Range Compressor Design" (JAES, 2012)
 - S. Linkwitz, "Active Crossover Networks for Non-coincident Drivers" (JAES, 1976)
-- A. Blumlein, British Patent 394,325 (1933) — M/S stereo technique
-- B. Bauer, "Stereophonic Earphone Reproduction" (JAES, 1961) — crossfeed
+- A. Blumlein, British Patent 394,325 (1933). M/S stereo technique
+- B. Bauer, "Stereophonic Earphone Reproduction" (JAES, 1961). crossfeed
 - ITU-R BS.1770-4, "Algorithms to measure audio programme loudness" (2015)
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.
 
 Copyright © 2026 Castor Logic Studio

@@ -16,7 +16,7 @@ Then add `"SignalKit"` to your target's dependencies.
 
 ## Processing a Single Buffer
 
-Every processor works with `UnsafeMutablePointer<Float>` buffers — the same format
+Every processor works with `UnsafeMutablePointer<Float>` buffers, the same format
 you get from Core Audio's render callback.
 
 ```swift
@@ -83,7 +83,7 @@ eq.apply(preset: .vocal)
 // Capture the current state as a preset
 let snapshot = eq.currentPreset()
 
-// Presets are Codable — save to disk
+// Presets are Codable. save to disk
 let data = try JSONEncoder().encode(snapshot)
 ```
 

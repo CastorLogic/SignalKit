@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
@@ -7,8 +7,8 @@ import Darwin
 
 /// Brick-wall peak limiter with look-ahead.
 ///
-/// Prevents output from exceeding the ceiling. Infinite ratio above threshold —
-/// nothing passes. Uses a ~1 ms look-ahead delay so the gain envelope begins
+/// Prevents output from exceeding the ceiling. Infinite ratio above threshold.
+/// Nothing passes. Uses a ~1 ms look-ahead delay so the gain envelope begins
 /// reducing before the peak arrives, avoiding clicks.
 ///
 /// Hot-path performance: zero transcendental math per sample. All gain computation

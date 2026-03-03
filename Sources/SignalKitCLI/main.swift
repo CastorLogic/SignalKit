@@ -2,7 +2,7 @@ import Foundation
 import SignalKit
 
 // ═══════════════════════════════════════════════════════
-// SignalKit CLI — WAV Processor Example
+// SignalKit CLI. WAV Processor Example
 //
 // Demonstrates the full SignalKit processing chain on a
 // WAV file. Reads 16/24/32-bit PCM, processes through
@@ -185,7 +185,7 @@ func writeWAV(path: String, samples: [[Float]], sampleRate: Int, bitsPerSample: 
 
 func printUsage() {
     print("""
-    SignalKit CLI — WAV Processor
+    SignalKit CLI. WAV Processor
 
     Usage: signalkit-cli <input.wav> <output.wav> [options]
 

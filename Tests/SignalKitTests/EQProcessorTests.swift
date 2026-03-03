@@ -194,7 +194,7 @@ final class EQProcessorTests: XCTestCase {
 
     /// Verify that a +12 dB boost at band 5 (1 kHz) actually increases energy
     /// in the 800-1200 Hz region relative to the 4-8 kHz region.
-    /// Uses vDSP DFT for spectral analysis — the way audio engineers validate EQ.
+    /// Uses vDSP DFT for spectral analysis, the way audio engineers validate EQ.
     func testFrequencyResponseViaDFT() {
         let sampleRate: Double = 48000
         let eq = EQProcessor(sampleRate: sampleRate, maxChannels: 1)
@@ -220,7 +220,7 @@ final class EQProcessorTests: XCTestCase {
         }
         eq.process(buf, count: N, channel: 0)
 
-        // DFT via Accelerate — use raw pointers for safe scoping
+        // DFT via Accelerate. use raw pointers for safe scoping
         let halfN = N / 2
         let realp = UnsafeMutablePointer<Float>.allocate(capacity: halfN)
         let imagp = UnsafeMutablePointer<Float>.allocate(capacity: halfN)
@@ -293,7 +293,7 @@ final class EQProcessorTests: XCTestCase {
             outputPowers.append(power / Float(count))
         }
 
-        // Both should produce similar RMS — within 1.5 dB
+        // Both should produce similar RMS. within 1.5 dB
         let diffDB = abs(10 * log10(outputPowers[0] / max(outputPowers[1], 1e-20)))
         XCTAssertLessThan(diffDB, 1.5,
                           "EQ at 44.1k and 96k should agree within 1.5 dB (got \(diffDB) dB)")

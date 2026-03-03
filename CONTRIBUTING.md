@@ -17,10 +17,10 @@ swift test
 
 Any code that runs inside a `process()` method must follow these rules:
 
-- **No heap allocations** — no `Array.append`, no string formatting, no `malloc`
-- **No locks** — no `DispatchSemaphore`, no `os_unfair_lock`
-- **No Objective-C messaging** — no `objc_msgSend`, no `NSLog`
-- **No ARC traffic** — avoid retain/release on the audio thread
+- **No heap allocations**: no `Array.append`, no string formatting, no `malloc`
+- **No locks**: no `DispatchSemaphore`, no `os_unfair_lock`
+- **No Objective-C messaging**: no `objc_msgSend`, no `NSLog`
+- **No ARC traffic**: avoid retain/release on the audio thread
 
 If you are unsure whether an operation is real-time safe, it probably is not. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
@@ -29,7 +29,7 @@ If you are unsure whether an operation is real-time safe, it probably is not. Se
 - Use `UnsafeMutablePointer<Float>` for audio buffers, not `[Float]`
 - Mark processor classes as `public final class`
 - Use `@inline(__always)` only on small, hot inner-loop helpers
-- Keep comments concise — explain *why*, not *what*
+- Keep comments concise: explain *why*, not *what*
 - Reference academic sources where applicable (author, title, venue, year)
 - No emoji, no filler text, no first-person language in comments
 
@@ -37,11 +37,11 @@ If you are unsure whether an operation is real-time safe, it probably is not. Se
 
 Every processor must have tests covering:
 
-1. **Bypass/passthrough** — flat settings or disabled state should not modify audio
-2. **Signal modification** — verify the processor actually changes the signal as expected
-3. **Edge cases** — zero-length buffers, single-sample buffers, invalid parameters
-4. **Reset** — verify `reset()` clears all internal state
-5. **Presets** — round-trip application and snapshot
+1. **Bypass/passthrough**. flat settings or disabled state should not modify audio
+2. **Signal modification**: verify the processor actually changes the signal as expected
+3. **Edge cases**. zero-length buffers, single-sample buffers, invalid parameters
+4. **Reset**: verify `reset()` clears all internal state
+5. **Presets**: round-trip application and snapshot
 
 Run the full suite before submitting:
 

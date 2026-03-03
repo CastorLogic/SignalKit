@@ -17,7 +17,7 @@ struct BenchTimer {
     }
 
     static func measure(_ iterations: Int, _ body: () -> Void) -> BenchResult {
-        // Warmup — fill caches and JIT
+        // Warmup: fill caches and JIT
         for _ in 0..<10 { body() }
 
         var samples = [Double]()

@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
@@ -60,7 +60,7 @@ public struct EQPreset: Codable, Hashable, Sendable {
 
     // MARK: Named Presets
 
-    /// All bands at 0 dB — passthrough.
+    /// All bands at 0 dB (passthrough).
     public static let flat = EQPreset()
 
     /// Gentle low-end boost.
@@ -93,7 +93,7 @@ public struct EQPreset: Codable, Hashable, Sendable {
 ///
 /// Real-time safe: `process()` makes no heap allocations in our code path. All scratch buffers
 /// are pre-allocated at init. Coefficients are updated from the control thread via
-/// `setGain(_:forBand:)` and read lock-free by the audio thread — the worst case
+/// `setGain(_:forBand:)` and read lock-free by the audio thread; the worst case
 /// is processing one callback with stale coefficients, which is inaudible.
 public final class EQProcessor: AudioProcessor, @unchecked Sendable {
 

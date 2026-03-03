@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
@@ -73,10 +73,10 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
         }
     }
 
-    /// Stateless processor — reset is a no-op.
+    /// Stateless processor. reset is a no-op.
     public func reset() {}
 
-    /// Process stereo pair directly — preferred over the single-channel path.
+    /// Process stereo pair directly (preferred over the single-channel path).
     public func process(left: UnsafeMutablePointer<Float>,
                         right: UnsafeMutablePointer<Float>,
                         count: Int) {

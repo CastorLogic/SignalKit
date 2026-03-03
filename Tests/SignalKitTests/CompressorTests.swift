@@ -177,7 +177,7 @@ final class CompressorTests: XCTestCase {
         let rmsDB = 10 * log10(power / Float(count) + 1e-20)
 
         // Input is ~0 dBFS, threshold is -20, ratio 4:1
-        // Multiband crossover splits energy — each band sees less than full-band.
+        // Multiband crossover splits energy; each band sees less than full-band.
         // The combined output should still be measurably reduced.
         XCTAssertLessThan(rmsDB, -2.0,
                           "4:1 compression should reduce a 0 dBFS signal (got \(rmsDB) dB)")

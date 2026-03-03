@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 /// Shared interface for real-time audio processors.
@@ -26,7 +26,7 @@ public protocol AudioProcessor: AnyObject {
     func reset()
 }
 
-/// Default stereo implementation — processors only need to implement single-channel.
+/// Default stereo implementation. processors only need to implement single-channel.
 public extension AudioProcessor {
     @inlinable
     func process(left: UnsafeMutablePointer<Float>,

@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
@@ -7,14 +7,14 @@ import Darwin
 
 /// Lock-free single-producer/single-consumer ring buffer for real-time audio.
 ///
-/// Designed to decouple two clock domains — e.g., a capture callback writing
+/// Designed to decouple two clock domains. e.g., a capture callback writing
 /// at one sample rate and a render callback reading at another. Both
 /// threads can operate simultaneously without locks.
 ///
 /// Overflow policy: writer advances the read pointer (drops oldest frames).
 /// Underrun policy: reader outputs silence (zero-fills).
 ///
-/// Thread safety is achieved via `OSMemoryBarrier()` — a lightweight store
+/// Thread safety is achieved via `OSMemoryBarrier()`, a lightweight store
 /// fence that guarantees cross-thread visibility of buffer contents before
 /// the head/tail pointers are updated. No locks, no Objective-C messaging.
 ///

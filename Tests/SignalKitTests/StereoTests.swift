@@ -84,7 +84,7 @@ final class StereoTests: XCTestCase {
 
         StereoWidener.process(stereo, frameCount: count, width: 2.0)
 
-        // With width=2, the side component is doubled — L and R should differ more
+        // With width=2, the side component is doubled. L and R should differ more
         var diffBefore: Float = 0
         var diffAfter: Float = 0
         for i in 0..<count {

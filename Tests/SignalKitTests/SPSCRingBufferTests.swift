@@ -238,7 +238,7 @@ final class SPSCRingBufferTests: XCTestCase {
         let readBuf  = UnsafeMutablePointer<Float>.allocate(capacity: capacity)
         defer { writeBuf.deallocate(); readBuf.deallocate() }
 
-        // Write more than capacity — two full batches
+        // Write more than capacity. two full batches
         for i in 0..<capacity { writeBuf[i] = Float(i) }
         ring.write(writeBuf, frameCount: capacity - 1) // fill to max (capacity - 1)
 

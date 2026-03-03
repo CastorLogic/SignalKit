@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
@@ -78,14 +78,14 @@ public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
         } else if channel == 1 && pendingCount > 0 {
             let n = min(count, pendingCount)
             processPlanarCore(left: channelBuf, right: samples, count: n)
-            // Write processed left back — caller must have kept their pointer valid
+            // Write processed left back. caller must have kept their pointer valid
             // This is inherently correct because the protocol default calls channel 0
             // then channel 1 on the same buffer pair via process(left:right:count:).
             pendingCount = 0
         }
     }
 
-    /// Process stereo pair directly — preferred over the single-channel path.
+    /// Process stereo pair directly (preferred over the single-channel path).
     public func process(left: UnsafeMutablePointer<Float>,
                         right: UnsafeMutablePointer<Float>,
                         count: Int) {

@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
@@ -11,7 +11,7 @@ import Accelerate
 /// optionally applies slow automatic gain correction to normalize audio
 /// toward a target level (default −14 LUFS, the streaming standard).
 ///
-/// K-weighting applies two pre-filters to the measurement signal only — the
+/// K-weighting applies two pre-filters to the measurement signal only. the
 /// audio output is never frequency-shaped:
 ///   Stage 1: High-shelf boost (+4 dB at ~1.5 kHz) modeling head acoustics
 ///   Stage 2: High-pass (~38 Hz) to exclude sub-bass from the measurement
@@ -145,7 +145,7 @@ public final class LoudnessMeter: AudioProcessor, @unchecked Sendable {
         if channel == 0 {
             let n = min(count, maxScratchSize)
 
-            // Copy to scratch — K-weighting is measurement-only, audio stays clean
+            // Copy to scratch. K-weighting is measurement-only, audio stays clean
             memcpy(kWeightScratch, samples, n * MemoryLayout<Float>.size)
 
             applyBiquad(kWeightScratch, count: n,
@@ -159,7 +159,7 @@ public final class LoudnessMeter: AudioProcessor, @unchecked Sendable {
             rmsAccumulator += sumSq
             sampleCount += n
 
-            // Window complete — compute LUFS and update target
+            // Window complete. compute LUFS and update target
             if sampleCount >= windowSizeInSamples {
                 let meanSquare = rmsAccumulator / Float(sampleCount)
                 let z = max(meanSquare, 1e-20)

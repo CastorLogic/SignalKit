@@ -1,4 +1,4 @@
-// SignalKit — Audio DSP Toolkit
+// SignalKit - Audio DSP Toolkit
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
@@ -20,7 +20,7 @@ public struct CompressorBandSettings: Codable, Hashable, Sendable {
     public var attackMs: Float      // 0.1 to 100 ms
     public var releaseMs: Float     // 10 to 1000 ms
     public var makeupGain: Float    // 0 to 24 dB
-    public var lookaheadMs: Float   // 0 (off) to 10 ms — adds latency
+    public var lookaheadMs: Float   // 0 (off) to 10 ms, adds latency
     public var detectionMode: DetectionMode
     public var autoMakeup: Bool     // derive makeup gain from threshold/ratio
 
@@ -49,7 +49,7 @@ public struct CompressorPreset: Codable, Hashable, Sendable {
         self.bands = bands
     }
 
-    /// All ratios at 1:1 — passthrough.
+    /// All ratios at 1:1 (passthrough).
     public static let off = CompressorPreset(bands: [
         .init(threshold: 0, ratio: 1, attackMs: 10, releaseMs: 100, makeupGain: 0),
         .init(threshold: 0, ratio: 1, attackMs: 10, releaseMs: 100, makeupGain: 0),
@@ -95,7 +95,7 @@ public struct CompressorPreset: Codable, Hashable, Sendable {
 ///   coeff = exp(−1 / (time_seconds × Fs))
 ///
 /// Gain computer uses the soft-knee model from Giannoulis et al.,
-/// "Digital Dynamic Range Compressor Design — A Tutorial and Analysis" (AES, 2012).
+/// "Digital Dynamic Range Compressor Design. A Tutorial and Analysis" (AES, 2012).
 ///
 /// Real-time safe: all buffers pre-allocated, no heap work in `process()`.
 ///
@@ -378,7 +378,7 @@ public final class CompressorProcessor: AudioProcessor, @unchecked Sendable {
 
             if -gainDB > maxGR { maxGR = -gainDB }
 
-            // exp2f(dB × 0.05017) = 10^(dB/20) — see ARCHITECTURE.md for derivation
+            // exp2f(dB × 0.05017) = 10^(dB/20), see ARCHITECTURE.md for derivation
             scratchGain[i] = exp2f(gainDB * 0.05017088738) * makeup
 
             // Lookahead: swap current sample with delayed
