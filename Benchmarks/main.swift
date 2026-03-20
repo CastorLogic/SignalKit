@@ -1,6 +1,9 @@
 import Foundation
 import Accelerate
 import SignalKit
+import RealtimeSanitizer
+
+RealtimeSanitizer.ensureInitialized()
 
 // MARK: - Timing Infrastructure
 

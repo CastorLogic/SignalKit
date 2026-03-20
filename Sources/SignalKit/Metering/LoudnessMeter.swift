@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
+import RealtimeSanitizer
 
 // MARK: - Loudness Meter
 
@@ -138,6 +139,7 @@ public final class LoudnessMeter: AudioProcessor, @unchecked Sendable {
     /// Process a single channel in-place.
     ///
     /// Measures K-weighted LUFS on channel 0. Both channels receive identical gain.
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard enabled, count > 0 else { return }
 

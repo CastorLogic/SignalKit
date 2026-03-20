@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
+import RealtimeSanitizer
 
 // MARK: - Band Configuration
 
@@ -213,6 +214,7 @@ public final class EQProcessor: AudioProcessor, @unchecked Sendable {
     ///   - samples: Audio buffer, modified in-place.
     ///   - count: Frame count.
     ///   - channel: Channel index (0 = L, 1 = R).
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard channel < maxChannels, count > 0 else { return }
         let n = min(count, EQProcessor.maxBufferSize)

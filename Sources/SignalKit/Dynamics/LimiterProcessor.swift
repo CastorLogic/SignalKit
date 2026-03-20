@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
+import RealtimeSanitizer
 
 // MARK: - Peak Limiter
 
@@ -72,6 +73,7 @@ public final class LimiterProcessor: AudioProcessor, @unchecked Sendable {
     ///   if |x| > envelope: envelope = |x|       (instant attack)
     ///   else:              envelope *= release   (exponential decay)
     ///   gain = min(1, ceiling / envelope)
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard enabled, channel < maxChannels, count > 0 else { return }
 
