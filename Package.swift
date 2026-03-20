@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
@@ -15,10 +15,16 @@ let package = Package(
             targets: ["SignalKit"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/realtime-sanitizer/RTSanStandaloneSwift", .upToNextMajor(from: "0.1.0"))
+    ],
     targets: [
         .target(
             name: "SignalKit",
-            dependencies: []
+            dependencies: [
+                .product(name: "RealtimeSanitizer", package: "RTSanStandaloneSwift")
+            ],
+            swiftSettings: [.define("RELEASE", .when(configuration: .release))]
         ),
         .executableTarget(
             name: "SignalKitCLI",
@@ -30,10 +36,14 @@ let package = Package(
         ),
         .executableTarget(
             name: "Benchmarks",
-            dependencies: ["SignalKit"],
+            dependencies: [
+                "SignalKit",
+                .product(name: "RealtimeSanitizer", package: "RTSanStandaloneSwift")
+            ],
             path: "Benchmarks",
-            exclude: ["baseline.json", "latest.json"]
+            exclude: ["baseline.json", "latest.json"],
+            swiftSettings: [.define("RELEASE", .when(configuration: .release))]
         )
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v5]
 )

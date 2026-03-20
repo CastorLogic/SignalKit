@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
+import RealtimeSanitizer
 
 // MARK: - SPSC Ring Buffer
 
@@ -61,6 +62,7 @@ public final class SPSCRingBuffer: @unchecked Sendable {
     ///
     /// `data` must contain at least `frameCount × channels` samples.
     /// On overflow, the oldest unread frames are discarded.
+    @NonBlocking(in: "RELEASE")
     public func write(_ data: UnsafePointer<Float>, frameCount: Int) {
         var wp = _writePos.pointee
         OSMemoryBarrier()
@@ -110,6 +112,7 @@ public final class SPSCRingBuffer: @unchecked Sendable {
     ///
     /// `data` must have space for `frameCount × channels` samples.
     /// Underrun frames are zero-filled (silence).
+    @NonBlocking(in: "RELEASE")
     public func read(_ data: UnsafeMutablePointer<Float>, frameCount: Int) {
         var rp = _readPos.pointee
         OSMemoryBarrier()

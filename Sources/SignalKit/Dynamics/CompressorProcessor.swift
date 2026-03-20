@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
+import RealtimeSanitizer
 
 // MARK: - Band Settings
 
@@ -249,6 +250,7 @@ public final class CompressorProcessor: AudioProcessor, @unchecked Sendable {
     /// Process a single channel in-place.
     ///
     /// Signal flow: split → compress per band → recombine.
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard channel < maxChannels, count > 0, count <= maxBufferSize else { return }
         guard !isOff else { return }

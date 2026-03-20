@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Accelerate
+import RealtimeSanitizer
 
 // MARK: - Stereo Widener
 
@@ -60,6 +61,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     // MARK: - AudioProcessor Protocol
 
     /// Single-channel entry point. Channel 0 is buffered; processing occurs when channel 1 arrives.
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard abs(width - 1.0) > 0.01, count <= maxFrames else { return }
         if channel == 0 {
@@ -77,6 +79,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     public func reset() {}
 
     /// Process stereo pair directly (preferred over the single-channel path).
+    @NonBlocking(in: "RELEASE")
     public func process(left: UnsafeMutablePointer<Float>,
                         right: UnsafeMutablePointer<Float>,
                         count: Int) {
@@ -84,6 +87,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     }
 
     /// Process interleaved stereo [L0, R0, L1, R1, ...] in-place.
+    @NonBlocking(in: "RELEASE")
     public func processInterleaved(_ samples: UnsafeMutablePointer<Float>, frameCount: Int) {
         guard abs(width - 1.0) > 0.01, frameCount <= maxFrames else { return }
 
@@ -109,6 +113,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     }
 
     /// Process planar stereo (separate L/R buffers) in-place.
+    @NonBlocking(in: "RELEASE")
     public func processPlanar(left: UnsafeMutablePointer<Float>,
                               right: UnsafeMutablePointer<Float>,
                               count: Int, width: Float? = nil) {
@@ -133,6 +138,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     /// Process planar stereo using a shared internal instance.
     ///
     /// - Warning: Not thread-safe. For concurrent use, create separate instances.
+    @NonBlocking(in: "RELEASE")
     public static func processPlanar(left: UnsafeMutablePointer<Float>,
                                      right: UnsafeMutablePointer<Float>,
                                      count: Int, width: Float) {
@@ -142,6 +148,7 @@ public final class StereoWidener: AudioProcessor, @unchecked Sendable {
     /// Process interleaved stereo using a shared internal instance.
     ///
     /// - Warning: Not thread-safe. For concurrent use, create separate instances.
+    @NonBlocking(in: "RELEASE")
     public static func process(_ samples: UnsafeMutablePointer<Float>,
                                frameCount: Int, width: Float) {
         sharedInstance.width = width

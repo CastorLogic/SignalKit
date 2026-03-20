@@ -2,6 +2,7 @@
 // Copyright © 2026 Castor Logic Studio. MIT License.
 
 import Darwin
+import RealtimeSanitizer
 
 // MARK: - Crossfeed Processor
 
@@ -68,6 +69,7 @@ public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
 
     /// Single-channel entry point. Crossfeed requires both channels, so channel 0
     /// is buffered internally. Processing occurs when channel 1 arrives.
+    @NonBlocking(in: "RELEASE")
     public func process(_ samples: UnsafeMutablePointer<Float>, count: Int, channel: Int) {
         guard !isOff else { return }
 
@@ -86,6 +88,7 @@ public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
     }
 
     /// Process stereo pair directly (preferred over the single-channel path).
+    @NonBlocking(in: "RELEASE")
     public func process(left: UnsafeMutablePointer<Float>,
                         right: UnsafeMutablePointer<Float>,
                         count: Int) {
@@ -96,6 +99,7 @@ public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
     // MARK: - Interleaved / Planar Convenience
 
     /// Process interleaved stereo [L0, R0, L1, R1, ...] in-place.
+    @NonBlocking(in: "RELEASE")
     public func processInterleaved(_ samples: UnsafeMutablePointer<Float>, frameCount: Int) {
         guard !isOff else { return }
 
@@ -124,6 +128,7 @@ public final class CrossfeedProcessor: AudioProcessor, @unchecked Sendable {
     }
 
     /// Process planar stereo (separate L/R buffers) in-place.
+    @NonBlocking(in: "RELEASE")
     public func processPlanar(left: UnsafeMutablePointer<Float>,
                               right: UnsafeMutablePointer<Float>,
                               count: Int) {

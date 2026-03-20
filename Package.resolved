@@ -1,0 +1,24 @@
+{
+  "originHash" : "6649c6eac72e91c72bbbf563e5bfb6397efc6c107516c2db4894d8a6da4402ac",
+  "pins" : [
+    {
+      "identity" : "rtsanstandaloneswift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/realtime-sanitizer/RTSanStandaloneSwift",
+      "state" : {
+        "revision" : "1424150d09b0a6917ce69d85761c2cc9a8bb9725",
+        "version" : "0.1.2"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax.git",
+      "state" : {
+        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
+        "version" : "602.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}
